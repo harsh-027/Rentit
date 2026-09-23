@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api', withCredentials: true, headers: { 'Content-Type': 'application/json' } })
+export const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || 'https://rentit-sd6y.onrender.com/api', withCredentials: true, headers: { 'Content-Type': 'application/json' } })
 export const authApi = { register: (data: unknown) => api.post('/auth/register', data), login: (data: unknown) => api.post('/auth/login', data), me: () => api.get('/auth/me'), logout: () => api.post('/auth/logout') }
 export const propertyApi = { get: () => api.get('/property'), save: (data: unknown) => api.post('/property', data) }
 export const roomApi = { list: () => api.get('/rooms'), create: (data: unknown) => api.post('/rooms', data) }
