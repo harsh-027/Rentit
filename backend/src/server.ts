@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 const app = express()
-app.set('trust proxy', 1)
+app.set("trust proxy", 1);
 const port = Number(process.env.PORT || 4000)
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
 const configuredJwtSecret = process.env.JWT_SECRET
