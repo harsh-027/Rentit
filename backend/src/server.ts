@@ -48,7 +48,10 @@ app.post('/api/auth/register', async (req, res) => {
     const user = await prisma.user.create({ data: { name: name || 'Property owner', email: email.toLowerCase(), passwordHash: await bcrypt.hash(password, 12) } })
     res.cookie(tokenCookie, signToken(user.id), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 })
     return res.status(201).json({ user: safeUser(user) })
-  } catch { return error(res, 500, 'Unable to create account') }
+    } catch (err) {
+    console.error('[register] Error:', err)
+    return error(res, 500, 'Unable to create account')
+  }
 })
 app.post('/api/auth/login', async (req, res) => {
   const parsed = authSchema.pick({ email: true, password: true }).safeParse(req.body); if (!parsed.success) return error(res, 422, 'Enter a valid email and password')
