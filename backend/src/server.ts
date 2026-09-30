@@ -11,6 +11,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 const app = express()
+app.set('trust proxy', 1)
 const port = Number(process.env.PORT || 4000)
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
 const configuredJwtSecret = process.env.JWT_SECRET
@@ -45,13 +46,13 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const exists = await prisma.user.findUnique({ where: { email: email.toLowerCase() } }); if (exists) return error(res, 409, 'An account with this email already exists')
     const user = await prisma.user.create({ data: { name: name || 'Property owner', email: email.toLowerCase(), passwordHash: await bcrypt.hash(password, 12) } })
-    res.cookie(tokenCookie, signToken(user.id), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 })
+    res.cookie(tokenCookie, signToken(user.id), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 })
     return res.status(201).json({ user: safeUser(user) })
   } catch { return error(res, 500, 'Unable to create account') }
 })
 app.post('/api/auth/login', async (req, res) => {
   const parsed = authSchema.pick({ email: true, password: true }).safeParse(req.body); if (!parsed.success) return error(res, 422, 'Enter a valid email and password')
-  try { const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } }); if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) return error(res, 401, 'Invalid email or password'); res.cookie(tokenCookie, signToken(user.id), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 }); return res.json({ user: safeUser(user) }) } catch { return error(res, 500, 'Unable to sign in') }
+  try { const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } }); if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) return error(res, 401, 'Invalid email or password'); res.cookie(tokenCookie, signToken(user.id), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 }); return res.json({ user: safeUser(user) }) } catch { return error(res, 500, 'Unable to sign in') }
 })
 app.post('/api/auth/logout', (_req, res) => { res.clearCookie(tokenCookie); res.status(204).end() })
 app.get('/api/auth/me', auth, async (req: AuthRequest, res) => { const user = await prisma.user.findUnique({ where: { id: req.userId! } }); if (!user) return error(res, 401, 'Session expired'); res.json({ user: safeUser(user) }) })
